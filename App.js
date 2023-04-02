@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Platform, Text, View, StyleSheet, Button } from 'react-native';
 import * as Location from 'expo-location';
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import axios from 'axios';
+
+
 
 export default function App() {
   const [location, setLocation] = useState(null);
@@ -36,10 +39,27 @@ export default function App() {
   if (errorMsg) {
     text = errorMsg;
   } else if (location) {
-    text = JSON.stringify(location)
-    mylat = parseFloat(JSON.stringify(location.latitude));
-    mylong = parseFloat(JSON.stringify(location.longitude));
+    text = JSON.stringify(location);
+    mylat = location.latitude;
+    mylong = location.longitude;
   }
+  // ?lat=${mylat}&lng=${mylong}
+
+  // axios.get(`https://6cbfa40d-1b54-4b5d-8c72-774f14fba01d.mock.pstmn.io`,
+  axios.get(`http://localhost:8080/map/location`,
+    {
+      params: {
+        mylat,
+        mylong,
+      }
+    })
+    .then((response) => {
+      console.log(mylat, mylong);
+      console.log("succ")
+    })
+    .catch((error) => {
+      console.log(error);
+    });
 
 
   return (
@@ -55,8 +75,8 @@ export default function App() {
         }}
         provider={PROVIDER_GOOGLE}
       >
-        <Marker coordinate={location}>
-        </Marker>
+        {/* <Marker coordinate={location}>
+        </Marker> */}
       </MapView>
     </View>
   );
