@@ -60,6 +60,9 @@ export default function App() {
     .catch((error) => {
       console.log(error);
     });
+  // fetch('https://dummyjson.com/products/1')
+  //   .then(res => res.json())
+  //   .then(json => console.log(json))
 
 
   return (
@@ -75,8 +78,14 @@ export default function App() {
         }}
         provider={PROVIDER_GOOGLE}
       >
-        {/* <Marker coordinate={location}>
-        </Marker> */}
+        <Marker coordinate={{
+          // latitude: location && mylat,
+          // longitude: location && mylong
+          latitude: location ? mylat : 0,
+          longitude: location ? mylong : 0
+        }}
+          title="현재 위치"
+          description="주소" />
       </MapView>
     </View>
   );
