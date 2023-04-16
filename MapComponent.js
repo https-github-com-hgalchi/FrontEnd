@@ -7,7 +7,7 @@ import {
     TouchableOpacity,
 } from "react-native";
 import * as Location from "expo-location";
-import MapView, { Marker, Callout, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, Callout, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 import axios from "axios";
 import markersData from "./markerData";
 import { useSendLocation } from "./SendLocation";
@@ -18,6 +18,7 @@ export default function MapComponent() {
     const [errorMsg, setErrorMsg] = useState(null);
     const [markers, setMarkers] = useState([]);
     const [markerInfo, setMarkerInfo] = useState(null);
+    const [routeCoordinates, setRouteCoordinates] = useState([]);
 
     //위치 변경될 때 마다 렌더링 되도록 요청
     useEffect(() => {
@@ -53,6 +54,46 @@ export default function MapComponent() {
     let mylat = location?.latitude || 0;
     let mylong = location?.longitude || 0;
 
+
+    //경로 그리기 test중
+    const fetchRoute = async (origin, destination) => {
+        try {
+            const response = await axios.get(
+                `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=AIzaSyD3weTrIItxYGaJK-h4EUDIX_xrVLxGKX0`
+            );
+
+            const points = decode(response.data.routes[0].overview_polyline.points);
+            const coords = points.map((point) => {
+                return {
+                    latitude: point[0],
+                    longitude: point[1],
+                };
+            });
+
+            setRouteCoordinates(coords);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+    // Polyline 디코딩 함수
+    function decode(t, e) {
+        for (
+            var n, o, u = 0, l = 0, r = 0, d = [], h = 0, i = 0, a = null, c = Math.pow(10, e || 5);
+            (n = t.charCodeAt(u++)) - 63;
+
+        ) {
+            (a = (n &= 31) >>
+                0), (h |= (n & 31) << (i += 5)) >= 32 && (i -= 32), (l += h % (a ? 1 << i : c)), (h /= a ? 1 << i : c), (i -= a), (o = t.charCodeAt(u++)) - 63, (a = (o &= 31) >> 0), (h |= (o & 31) << (i += 5)) >= 32 && (i -= 32), (r += h % (a ? 1 << i : c)), (h /= a ? 1 << i : c), (i -= a), d.push([l / c * (a ? 1 << i : 1), r / c * (a ? 1 << i : 1)]);
+        }
+        return (d = d.map(function (t) {
+            return { latitude: t[0], longitude: t[1] };
+        }));
+    }
+
+
+
+
+
     return (
         <View style={styles.container}>
             <Text style={styles.paragraph}>{mylat}</Text>
@@ -62,8 +103,8 @@ export default function MapComponent() {
                 region={{
                     latitude: mylat,
                     longitude: mylong,
-                    latitudeDelta: 0.00999,
-                    longitudeDelta: 0.00521,
+                    latitudeDelta: 0.00799,
+                    longitudeDelta: 0.00321,
                 }}
                 provider={PROVIDER_GOOGLE}
             >
@@ -92,8 +133,10 @@ export default function MapComponent() {
                     >
                         <Callout>
                             <TouchableOpacity
-                                onPress={() => showMarkerInfo(marker)}
-                            >
+                                onPress={() => {
+                                    showMarkerInfo(marker);
+                                    fetchRoute({ latitude: mylat, longitude: mylong }, { latitude: marker.latitude, longitude: marker.longitude });
+                                }}>
                                 <View>
                                     <Text>{marker.title}</Text>
                                     <Text>{marker.description}</Text>
@@ -111,6 +154,11 @@ export default function MapComponent() {
                     title="hospital"
                     description="seoul hospital"
                     onPress={() => console.log("pressed")}
+                />
+                <Polyline
+                    coordinates={routeCoordinates}
+                    strokeWidth={5}
+                    strokeColor="#ff0000"
                 />
             </MapView>
             {markerInfo && (
