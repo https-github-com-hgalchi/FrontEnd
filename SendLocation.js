@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import axios from "axios";
 
-export const useSendLocation = (location) => {
+const useSendLocation = (location) => {
     useEffect(() => {
         const sendLocationData = async (location) => {
             try {
@@ -21,3 +21,5 @@ export const useSendLocation = (location) => {
         }
     }, [location]);
 };
+
+export default useSendLocation;

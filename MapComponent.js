@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     Text,
     View,
@@ -12,13 +12,33 @@ import axios from "axios";
 import markersData from "./markerData";
 import { useSendLocation } from "./SendLocation";
 import { useFetchData } from "./FetchData";
+import { MaterialIcons } from '@expo/vector-icons';
+import { getCurrentPositionAsync } from "expo-location";
 
-export default function MapComponent() {
+const MapComponent = () => {
     const [location, setLocation] = useState(null);
     const [errorMsg, setErrorMsg] = useState(null);
     const [markers, setMarkers] = useState([]);
     const [markerInfo, setMarkerInfo] = useState(null);
     const [routeCoordinates, setRouteCoordinates] = useState([]);
+
+    const mapRef = useRef(null);//현재 위치로 돌아오는 속도 개선을 위해 추가(테스트중)
+
+    const handlePos = async () => {
+        let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        setLocation(location.coords);
+
+        if (mapRef.current) {
+            mapRef.current.animateToRegion({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                latitudeDelta: 0.00799,
+                longitudeDelta: 0.00321,
+            }, 500); // 500ms 동안 지도 이동 애니메이션을 적용합니다.
+        }
+    };
+
+
 
     //위치 변경될 때 마다 렌더링 되도록 요청
     useEffect(() => {
@@ -56,39 +76,39 @@ export default function MapComponent() {
 
 
     //경로 그리기 test중
-    const fetchRoute = async (origin, destination) => {
-        try {
-            const response = await axios.get(
-                `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=AIzaSyD3weTrIItxYGaJK-h4EUDIX_xrVLxGKX0`
-            );
+    // const fetchRoute = async (origin, destination) => {
+    //     try {
+    //         const response = await axios.get(
+    //             `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=AIzaSyD3weTrIItxYGaJK-h4EUDIX_xrVLxGKX0`
+    //         );
 
-            const points = decode(response.data.routes[0].overview_polyline.points);
-            const coords = points.map((point) => {
-                return {
-                    latitude: point[0],
-                    longitude: point[1],
-                };
-            });
+    //         const points = decode(response.data.routes[0].overview_polyline.points);
+    //         const coords = points.map((point) => {
+    //             return {
+    //                 latitude: point[0],
+    //                 longitude: point[1],
+    //             };
+    //         });
 
-            setRouteCoordinates(coords);
-        } catch (error) {
-            console.log(error);
-        }
-    };
+    //         setRouteCoordinates(coords);
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    // };
     // Polyline 디코딩 함수
-    function decode(t, e) {
-        for (
-            var n, o, u = 0, l = 0, r = 0, d = [], h = 0, i = 0, a = null, c = Math.pow(10, e || 5);
-            (n = t.charCodeAt(u++)) - 63;
+    // function decode(t, e) {
+    //     for (
+    //         var n, o, u = 0, l = 0, r = 0, d = [], h = 0, i = 0, a = null, c = Math.pow(10, e || 5);
+    //         (n = t.charCodeAt(u++)) - 63;
 
-        ) {
-            (a = (n &= 31) >>
-                0), (h |= (n & 31) << (i += 5)) >= 32 && (i -= 32), (l += h % (a ? 1 << i : c)), (h /= a ? 1 << i : c), (i -= a), (o = t.charCodeAt(u++)) - 63, (a = (o &= 31) >> 0), (h |= (o & 31) << (i += 5)) >= 32 && (i -= 32), (r += h % (a ? 1 << i : c)), (h /= a ? 1 << i : c), (i -= a), d.push([l / c * (a ? 1 << i : 1), r / c * (a ? 1 << i : 1)]);
-        }
-        return (d = d.map(function (t) {
-            return { latitude: t[0], longitude: t[1] };
-        }));
-    }
+    //     ) {
+    //         (a = (n &= 31) >>
+    //             0), (h |= (n & 31) << (i += 5)) >= 32 && (i -= 32), (l += h % (a ? 1 << i : c)), (h /= a ? 1 << i : c), (i -= a), (o = t.charCodeAt(u++)) - 63, (a = (o &= 31) >> 0), (h |= (o & 31) << (i += 5)) >= 32 && (i -= 32), (r += h % (a ? 1 << i : c)), (h /= a ? 1 << i : c), (i -= a), d.push([l / c * (a ? 1 << i : 1), r / c * (a ? 1 << i : 1)]);
+    //     }
+    //     return (d = d.map(function (t) {
+    //         return { latitude: t[0], longitude: t[1] };
+    //     }));
+    // }
 
 
 
@@ -96,9 +116,10 @@ export default function MapComponent() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.paragraph}>{mylat}</Text>
-            <Text style={styles.paragraph}>{mylong}</Text>
+            {/* <Text style={styles.paragraph}>{mylat}</Text> */}
+            {/* <Text style={styles.paragraph}>{mylong}</Text> */}
             <MapView
+                ref={mapRef}
                 style={styles.map}
                 region={{
                     latitude: mylat,
@@ -135,7 +156,7 @@ export default function MapComponent() {
                             <TouchableOpacity
                                 onPress={() => {
                                     showMarkerInfo(marker);
-                                    fetchRoute({ latitude: mylat, longitude: mylong }, { latitude: marker.latitude, longitude: marker.longitude });
+                                    // fetchRoute({ latitude: mylat, longitude: mylong }, { latitude: marker.latitude, longitude: marker.longitude });
                                 }}>
                                 <View>
                                     <Text>{marker.title}</Text>
@@ -161,14 +182,21 @@ export default function MapComponent() {
                     strokeColor="#ff0000"
                 />
             </MapView>
-            {markerInfo && (
+            <MaterialIcons name="my-location" size={35} color="black" onPress={() => handlePos()}
+                style={{
+                    position: 'absolute', flex: 1, right: 30, bottom: 30, backgroundColor: 'white', padding: 8,
+                    borderTopLeftRadius: 30, borderTopRightRadius: 30, borderBottomLeftRadius: 30, borderBottomRightRadius: 30,
+                }}
+            />
+
+            {/* {markerInfo && (
                 <View style={styles.markerInfo}>
                     <Text>Title: {markerInfo.title}</Text>
                     <Text>Description: {markerInfo.description}</Text>
                 </View>
-            )}
+            )} */}
 
-            <Text>Minjoon</Text>
+            {/* <Text>Minjoon</Text> */}
         </View>
     );
 }
@@ -176,16 +204,20 @@ export default function MapComponent() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 20,
+        // alignItems: "center",
+        // justifyContent: "center",
+        // padding: 20,
     },
     paragraph: {
         fontSize: 18,
         textAlign: "center",
     },
     map: {
-        width: Dimensions.get("window").height,
-        height: "80%",
+        flex: 1,
+        width: Dimensions.get("window").width,
+        // width: "100%",
+        height: Dimensions.get("window").height,
     },
 });
+
+export default MapComponent;
