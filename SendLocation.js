@@ -5,7 +5,7 @@ const useSendLocation = (location) => {
     useEffect(() => {
         const sendLocationData = async (location) => {
             try {
-                const response = await axios.post("http://localhost:8080/map/location", {
+                const response = await axios.post("http://localhost:8080/map/getLocation", {
                     latitude: location.latitude,
                     longitude: location.longitude,
                 });

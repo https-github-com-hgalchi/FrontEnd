@@ -11,14 +11,16 @@ import MapView, { Marker, Callout, PROVIDER_GOOGLE, Polyline } from "react-nativ
 import axios from "axios";
 import markersData from "./markerData";
 import { useSendLocation } from "./SendLocation";
-import { useFetchData } from "./FetchData";
+import { useFetchAddress } from "./useFetchAddress";
+import { useFetchEmergency } from "./useFetchEmergency";
 import { MaterialIcons } from '@expo/vector-icons';
 import { getCurrentPositionAsync } from "expo-location";
 
 const MapComponent = () => {
     const [location, setLocation] = useState(null);
     const [errorMsg, setErrorMsg] = useState(null);
-    const [markers, setMarkers] = useState([]);
+    const [address, setAddress] = useState([]);
+    const [emergencyMarkers, setEmergencyMarkers] = useState([]);
     const [markerInfo, setMarkerInfo] = useState(null);
     const [routeCoordinates, setRouteCoordinates] = useState([]);
 
@@ -62,14 +64,23 @@ const MapComponent = () => {
         })();
     }, []);
 
+    useEffect(() => {
+        //받아온 응급실 데이터 보여주기
+        // console.log("Fetched emergency markers:", emergencyMarkers);
+    }, [emergencyMarkers]);
+
+
     // 데이터 보내기 기능 사용
     // useSendLocation(location);
     // 데이터 받기 기능 사용
-    // useFetchData(location, setMarkers);
+    useFetchAddress(location, setAddress);
+    useFetchEmergency(address, setEmergencyMarkers);
+
+    // console.log(address)
     //더미데이터
-    useEffect(() => {
-        setMarkers(markersData);
-    }, []);
+    // useEffect(() => {
+    //     setMarkers(markersData);
+    // }, []);
 
     let mylat = location?.latitude || 0;
     let mylong = location?.longitude || 0;
@@ -116,15 +127,13 @@ const MapComponent = () => {
 
     return (
         <View style={styles.container}>
-            {/* <Text style={styles.paragraph}>{mylat}</Text> */}
-            {/* <Text style={styles.paragraph}>{mylong}</Text> */}
             <MapView
                 ref={mapRef}
                 style={styles.map}
                 region={{
                     latitude: mylat,
                     longitude: mylong,
-                    latitudeDelta: 0.00799,
+                    latitudeDelta: 0.99,
                     longitudeDelta: 0.00321,
                 }}
                 provider={PROVIDER_GOOGLE}
@@ -142,32 +151,29 @@ const MapComponent = () => {
                 />
 
                 {/* Marker 여러개 생성 시 사용 */}
-                {markers.map((marker, index) => (
+                {emergencyMarkers.map((marker, index) => (
                     <Marker
                         key={index}
                         coordinate={{
-                            latitude: marker.latitude,
-                            longitude: marker.longitude,
+                            latitude: marker.wgs84Lat,
+                            longitude: marker.wgs84Lon,
                         }}
-                        title={marker.title}
-                        description={marker.description}
+                        title={marker.dutyName}
+                        description={marker.dutyAddr}
                     >
                         <Callout>
-                            <TouchableOpacity
-                                onPress={() => {
-                                    showMarkerInfo(marker);
-                                    // fetchRoute({ latitude: mylat, longitude: mylong }, { latitude: marker.latitude, longitude: marker.longitude });
-                                }}>
+                            <TouchableOpacity>
                                 <View>
-                                    <Text>{marker.title}</Text>
-                                    <Text>{marker.description}</Text>
+                                    <Text>{marker.dutyName}</Text>
+                                    <Text>{marker.dutyAddr}</Text>
+                                    <Text>{marker.dutyTell}</Text>
                                 </View>
                             </TouchableOpacity>
                         </Callout>
                     </Marker>
                 ))}
                 {/* marker test */}
-                <Marker
+                {/* <Marker
                     coordinate={{
                         latitude: 37.541895,
                         longitude: 127.013,
@@ -175,13 +181,14 @@ const MapComponent = () => {
                     title="hospital"
                     description="seoul hospital"
                     onPress={() => console.log("pressed")}
-                />
-                <Polyline
+                /> */}
+                {/* <Polyline
                     coordinates={routeCoordinates}
                     strokeWidth={5}
                     strokeColor="#ff0000"
-                />
+                /> */}
             </MapView>
+            {/* 실시간 위치 이동 버튼 */}
             <MaterialIcons name="my-location" size={35} color="black" onPress={() => handlePos()}
                 style={{
                     position: 'absolute', flex: 1, right: 30, bottom: 30, backgroundColor: 'white', padding: 8,
@@ -196,7 +203,6 @@ const MapComponent = () => {
                 </View>
             )} */}
 
-            {/* <Text>Minjoon</Text> */}
         </View>
     );
 }

@@ -1,23 +1,22 @@
 import { useEffect } from "react";
 import axios from "axios";
 
-export const useFetchData = (location, setMarkers) => {
+export const useFetchAddress = (location, setAddress) => {
     useEffect(() => {
         if (location) {
-            // axios 사용 버전
-            const { latitude
-                , longitude } = location;
+            const { latitude, longitude } = location;
+
             axios
-                .get("http://localhost:8080/map/location", {
+                .get("http://localhost:8080/map/getLocation", {
                     params: {
                         latitude,
                         longitude,
                     },
                 })
                 .then((response) => {
-                    console.log(latitude, longitude);
-                    console.log("suc");
-                    setMarkers(response.data);
+                    // console.log(latitude, longitude);
+                    // console.log("Address data", response.data);
+                    setAddress(response.data);
                 })
                 .catch((error) => {
                     console.log(error);
