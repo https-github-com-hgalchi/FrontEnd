@@ -7,10 +7,11 @@ export const useFetchEmergency = (address, setEmergencyMarkers) => {
             const fetchData = async () => {
                 try {
                     const response = await axios.get(
-                        `http://localhost:8080/map/getLocationNear/EMERGENCY?addr=${address.body[0].formatted_address.split(" ")[1]}`
+                        `http://localhost:8080/map/getLocationNear/EMERGENCY?addr=경기도용인시처인구`
                     );
+                    //${address.body[0].formatted_address.split(" ")[1]}
                     // ${address}
-                    console.log(address.body[0].formatted_address.split(" ")[1])
+                    // console.log(address.body[0].formatted_address.split(" ")[1]);;
                     // console.log("Emergency data", response.data);
                     setEmergencyMarkers(response.data.body);
                 } catch (error) {
