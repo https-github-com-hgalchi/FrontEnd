@@ -10,9 +10,9 @@ import * as Location from "expo-location";
 import MapView, { Marker, Callout, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
 import axios from "axios";
 import markersData from "./markerData";
-import { useSendLocation } from "./SendLocation";
-import { useFetchAddress } from "./useFetchAddress";
-import { useFetchEmergency } from "./useFetchEmergency";
+import { useSendLocation } from "./Fetch/SendLocation";
+import { useFetchAddress } from "./Fetch/useFetchAddress";
+import { useFetchEmergency } from "./Fetch/useFetchEmergency";
 import { MaterialIcons } from '@expo/vector-icons';
 import { getCurrentPositionAsync } from "expo-location";
 
@@ -64,10 +64,10 @@ const MapComponent = () => {
         })();
     }, []);
 
-    useEffect(() => {
-        //받아온 응급실 데이터 보여주기
-        // console.log("Fetched emergency markers:", emergencyMarkers);
-    }, [emergencyMarkers]);
+    // useEffect(() => {
+    // 받아온 응급실 데이터 보여주기
+    //     console.log("Fetched emergency markers:", emergencyMarkers);
+    // }, [emergencyMarkers]);
 
 
     // 데이터 보내기 기능 사용
