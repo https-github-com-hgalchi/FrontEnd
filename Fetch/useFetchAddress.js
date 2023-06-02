@@ -9,17 +9,18 @@ export const useFetchAddress = (location, setAddress) => {
             axios
                 .get("http://localhost:8080/map/getLocation", {
                     params: {
-                        latitude,
-                        longitude,
+                        lat: latitude,
+                        lng: longitude,
                     },
                 })
                 .then((response) => {
-                    // console.log(latitude, longitude);
-                    // console.log("Address data", response.data);
-                    setAddress(response.data);
+                    console.log(latitude, longitude);
+                    console.log("Address data", response.data.body[0].formatted_address);
+                    setAddress(response.data.body[0].formatted_address);
                 })
                 .catch((error) => {
-                    console.log(error);
+                    // console.log(latitude, longitude, "asdf")
+                    console.log("Error fetching Address data:", error);
                 });
         }
     }, [location]);

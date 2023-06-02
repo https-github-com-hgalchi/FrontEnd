@@ -7,7 +7,7 @@ import {
     TouchableOpacity,
 } from "react-native";
 import * as Location from "expo-location";
-import MapView, { Marker, Callout, PROVIDER_GOOGLE, Polyline } from "react-native-maps";
+import MapView, { Marker, Callout, PROVIDER_GOOGLE } from "react-native-maps";
 import axios from "axios";
 import markersData from "./markerData";
 import { useSendLocation } from "./Fetch/SendLocation";
@@ -15,6 +15,16 @@ import { useFetchAddress } from "./Fetch/useFetchAddress";
 import { useFetchEmergency } from "./Fetch/useFetchEmergency";
 import { MaterialIcons } from '@expo/vector-icons';
 import { getCurrentPositionAsync } from "expo-location";
+import Polyline from "@mapbox/polyline";
+import { fetchDirections } from "./DirectionApi";
+
+
+const routeToCoords = route => {
+    return Polyline.decode(route).map(([latitude, longitude]) => ({
+        latitude,
+        longitude
+    }));
+};
 
 const MapComponent = () => {
     const [location, setLocation] = useState(null);
@@ -23,6 +33,8 @@ const MapComponent = () => {
     const [emergencyMarkers, setEmergencyMarkers] = useState([]);
     const [markerInfo, setMarkerInfo] = useState(null);
     const [routeCoordinates, setRouteCoordinates] = useState([]);
+    const [destination, setDestination] = useState(null);
+    const [routePolyline, setRoutePolyline] = useState(null);
 
     const mapRef = useRef(null);//현재 위치로 돌아오는 속도 개선을 위해 추가(테스트중)
 
@@ -34,10 +46,16 @@ const MapComponent = () => {
             mapRef.current.animateToRegion({
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
-                latitudeDelta: 0.00799,
+                latitudeDelta: 3,
                 longitudeDelta: 0.00321,
+                // latitudeDelta: 0.00799,
+                // longitudeDelta: 0.00321,
             }, 500); // 500ms 동안 지도 이동 애니메이션을 적용합니다.
         }
+    };
+    // console.log(location.latitude, location.longitude)
+    const handlePress = (latitude, longitude) => {
+        setDestination({ latitude, longitude });
     };
 
 
@@ -65,7 +83,7 @@ const MapComponent = () => {
     }, []);
 
     // useEffect(() => {
-    // 받아온 응급실 데이터 보여주기
+    //     // 받아온 응급실 데이터 보여주기
     //     console.log("Fetched emergency markers:", emergencyMarkers);
     // }, [emergencyMarkers]);
 
@@ -74,60 +92,33 @@ const MapComponent = () => {
     // useSendLocation(location);
     // 데이터 받기 기능 사용
     useFetchAddress(location, setAddress);
-    useFetchEmergency(address, setEmergencyMarkers);
+    useFetchEmergency(location, setEmergencyMarkers);
+    // useFetchEmergency(address, setEmergencyMarkers);
 
     // console.log(address)
     //더미데이터
     // useEffect(() => {
-    //     setMarkers(markersData);
-    // }, []);
+    //     setEmergencyMarkers(markersData);
+    // }, [emergencyMarkers]);
 
     let mylat = location?.latitude || 0;
     let mylong = location?.longitude || 0;
 
-
-    //경로 그리기 test중
-    // const fetchRoute = async (origin, destination) => {
-    //     try {
-    //         const response = await axios.get(
-    //             `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=AIzaSyD3weTrIItxYGaJK-h4EUDIX_xrVLxGKX0`
-    //         );
-
-    //         const points = decode(response.data.routes[0].overview_polyline.points);
-    //         const coords = points.map((point) => {
-    //             return {
-    //                 latitude: point[0],
-    //                 longitude: point[1],
-    //             };
+    // useEffect(() => {
+    //     if (destination) {
+    //         fetchDirections(
+    //             { latitude: mylat, longitude: mylong },
+    //             destination
+    //         ).then((route) => {
+    //             if (route) {
+    //                 setRoutePolyline(routeToCoords(route));
+    //             }
     //         });
-
-    //         setRouteCoordinates(coords);
-    //     } catch (error) {
-    //         console.log(error);
     //     }
-    // };
-    // Polyline 디코딩 함수
-    // function decode(t, e) {
-    //     for (
-    //         var n, o, u = 0, l = 0, r = 0, d = [], h = 0, i = 0, a = null, c = Math.pow(10, e || 5);
-    //         (n = t.charCodeAt(u++)) - 63;
-
-    //     ) {
-    //         (a = (n &= 31) >>
-    //             0), (h |= (n & 31) << (i += 5)) >= 32 && (i -= 32), (l += h % (a ? 1 << i : c)), (h /= a ? 1 << i : c), (i -= a), (o = t.charCodeAt(u++)) - 63, (a = (o &= 31) >> 0), (h |= (o & 31) << (i += 5)) >= 32 && (i -= 32), (r += h % (a ? 1 << i : c)), (h /= a ? 1 << i : c), (i -= a), d.push([l / c * (a ? 1 << i : 1), r / c * (a ? 1 << i : 1)]);
-    //     }
-    //     return (d = d.map(function (t) {
-    //         return { latitude: t[0], longitude: t[1] };
-    //     }));
-    // }
-
-
-
-
+    // }, [destination]);
 
     return (
         <View style={styles.container}>
-
             <MapView
                 ref={mapRef}
                 style={styles.map}
@@ -161,6 +152,10 @@ const MapComponent = () => {
                         }}
                         title={marker.dutyName}
                         description={marker.dutyAddr}
+                        onPress={() => {
+                            console.log("Pressed Destination");
+                            handlePress(marker.wgs84Lat, marker.wgs84Lon);
+                        }}
                     >
                         <Callout>
                             <TouchableOpacity>
@@ -183,11 +178,13 @@ const MapComponent = () => {
                     description="seoul hospital"
                     onPress={() => console.log("pressed")}
                 /> */}
-                {/* <Polyline
-                    coordinates={routeCoordinates}
-                    strokeWidth={5}
-                    strokeColor="#ff0000"
-                /> */}
+                {routePolyline && (
+                    <Polyline
+                        coordinates={routePolyline.coordinates}
+                        strokeWidth={5}
+                        strokeColor="blue"
+                    />
+                )}
             </MapView>
             {/* 실시간 위치 이동 버튼 */}
             <MaterialIcons name="my-location" size={35} color="black" onPress={() => handlePos()}
